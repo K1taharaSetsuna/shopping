@@ -54,6 +54,11 @@ spring:
           uri: lb://order-service
           predicates:
             - Path=/platform/**
+        # ========== YOLO 推理路由（ngrok 公网穿透） ==========
+        - id: yolo-route
+          uri: ${YOLO_SERVICE_URL:http://localhost:5000}
+          predicates:
+            - Path=/yolo/**
     sentinel:
       transport:
         port: 9999                   # Gateway 跟 Sentinel 控制台通信的端口
