@@ -1,0 +1,16 @@
+# 模型权重 (太大，不入库)
+models/*.pt
+*.pt
+
+# 数据集 & 训练产物
+datasets/
+runs/
+*.zip
+*.mp4
+*.avi
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
