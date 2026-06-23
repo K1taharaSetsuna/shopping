@@ -1,15 +1,13 @@
 /* ============================================================
-   悦选 C端 · 淘宝风设计系统
+   悦选 统一设计系统（C端 + 管理后台共用淘宝橙品牌色）
    ============================================================ */
 :root {
-  /* 主色 */
+  /* 品牌主色 */
   --primary: #FF4400;
   --primary-hover: #FF5D24;
   --primary-dark: #E63C00;
   --primary-bg: #FFF5F0;
   --primary-light: #FFEDE5;
-
-  /* 搜索/强调黄 */
   --yellow: #FFD500;
   --yellow-dark: #FFC400;
 
@@ -27,7 +25,7 @@
   --bg-gray: #f7f7f7;
   --bg-soft: #fafafa;
 
-  /* 边框/分隔 */
+  /* 边框 */
   --border: #ebebeb;
   --border-light: #f0f0f0;
   --border-strong: #ddd;
@@ -50,11 +48,20 @@
 
   /* 字体 */
   --font: 'PingFang SC','Microsoft YaHei','Noto Sans SC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+
+  /* === 覆盖 Element Plus 主色（默认蓝 → 淘宝橙） === */
+  --el-color-primary: #FF4400;
+  --el-color-primary-light-3: #FF7440;
+  --el-color-primary-light-5: #FF9A72;
+  --el-color-primary-light-7: #FFC4A8;
+  --el-color-primary-light-8: #FFD9C5;
+  --el-color-primary-light-9: #FFF0E8;
+  --el-color-primary-dark-2: #E63C00;
 }
 
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html,body { width: 100%; }
+html,body { width: 100%; height: 100%; }
 body {
   font-family: var(--font);
   background: var(--bg-page);
@@ -86,3 +93,25 @@ img { display: block; max-width: 100%; }
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
+
+/* ======= Element Plus 全局覆盖 ======= */
+.el-button { border-radius: var(--r-sm); font-weight: 500; }
+.el-button--primary { box-shadow: 0 2px 6px rgba(255,68,0,0.2); }
+.el-button--primary:hover { box-shadow: 0 4px 10px rgba(255,68,0,0.3); transform: translateY(-1px); }
+.el-card, .el-dialog, .el-table, .el-tabs, .el-menu { border-radius: var(--r-md) !important; }
+.el-table { box-shadow: none; }
+.el-tag { border-radius: var(--r-sm); }
+.el-input__wrapper, .el-select__wrapper { border-radius: var(--r-sm) !important; }
+.el-dialog { overflow: hidden; }
+
+/* ======= 管理后台通用类 ======= */
+.adm-card {
+  background: var(--bg-white);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-card);
+  padding: 22px 24px;
+}
+.adm-page { max-width: 1320px; margin: 0 auto; }
+.adm-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 22px; }
+.adm-head h2 { font-size: 22px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.adm-head .sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; display: block; }

@@ -13,7 +13,7 @@
       <!-- 左：主图 + 缩略图 -->
       <div class="gallery">
         <div class="main-img">
-          <ProductImage :image="p.image" :category="p.category" :name="p.name" radius="8px" />
+          <ProductImage :image="thumbs[mainIdx]" :category="p.category" :name="p.name" radius="8px" />
           <div class="ribbon">悦选自营</div>
         </div>
         <div class="thumbs">
@@ -152,8 +152,12 @@ const msg = ref('')
 const tab = ref<'desc' | 'review'>('desc')
 
 const thumbs = computed(() => {
-  // 占位的 4 张缩略图：有图就复用真图，没图用空让占位组件兜底
-  return [p.value?.image || '', '', '', ''].slice(0, 4)
+  // 根据主图名生成 4 张缩略图（如 xiaomi-1.png → xiaomi-2/3/4.png）
+  const base = p.value?.image || ''
+  if (!base) return ['', '', '', '']
+  const m = base.match(/^(.+?-)(\d+)(\.[^.]+)$/)
+  if (!m) return [base, '', '', '']
+  return [1,2,3,4].map(n => m[1] + n + m[3])
 })
 
 const marketPrice = computed(() => p.value ? Math.round(p.value.price * 1.18) : 0)
@@ -171,7 +175,7 @@ const mockReviews = [
 onMounted(async () => {
   try {
     const res: any = await getProductById(Number(route.params.id))
-    p.value = res?.data || res
+    p.value = res
   } catch (e) {}
 })
 

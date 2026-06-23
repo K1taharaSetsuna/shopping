@@ -15,8 +15,9 @@
         <ul class="feats">
           <li>🛒 两步式防重下单</li>
           <li>🔐 JWT 网关统一鉴权</li>
+          <li>📊 管理后台数据看板</li>
           <li>🔍 Sleuth + Zipkin 链路追踪</li>
-          <li>⚖️ Ribbon 负载均衡 · Sentinel 流控</li>
+          <li>⚖️ Sentinel 流控 · Nacos 注册中心</li>
         </ul>
       </div>
     </section>
@@ -33,39 +34,54 @@
           </span>
         </div>
 
-        <!-- 登录 -->
+        <!-- 登录表单 -->
         <form v-if="tab === 'login'" @submit.prevent="handleLogin" class="form">
           <label class="field">
             <span>用户名</span>
-            <input v-model.trim="loginForm.username" placeholder="请输入用户名" autocomplete="username" />
+            <div class="ipt">
+              <el-icon><User /></el-icon>
+              <input v-model.trim="loginForm.username" placeholder="请输入用户名" autocomplete="username" />
+            </div>
           </label>
           <label class="field">
             <span>密码</span>
-            <input v-model="loginForm.password" type="password" placeholder="请输入密码" autocomplete="current-password" />
+            <div class="ipt">
+              <el-icon><Lock /></el-icon>
+              <input v-model="loginForm.password" type="password" placeholder="请输入密码" autocomplete="current-password" />
+            </div>
           </label>
           <div class="row">
             <label class="remember"><input type="checkbox" v-model="remember" /> 记住我</label>
-            <a class="forgot">忘记密码?</a>
+            <a class="forgot">忘记密码？</a>
           </div>
           <button type="submit" class="submit" :disabled="loading">
             <span v-if="!loading">登 录</span>
-            <span v-else class="loading-dot">登录中...</span>
+            <span v-else>登录中...</span>
           </button>
         </form>
 
-        <!-- 注册 -->
+        <!-- 注册表单 -->
         <form v-else @submit.prevent="handleRegister" class="form">
           <label class="field">
             <span>用户名</span>
-            <input v-model.trim="regForm.username" placeholder="请设置用户名" />
+            <div class="ipt">
+              <el-icon><User /></el-icon>
+              <input v-model.trim="regForm.username" placeholder="请设置用户名" />
+            </div>
           </label>
           <label class="field">
             <span>密码</span>
-            <input v-model="regForm.password" type="password" placeholder="请设置密码" />
+            <div class="ipt">
+              <el-icon><Lock /></el-icon>
+              <input v-model="regForm.password" type="password" placeholder="请设置密码" />
+            </div>
           </label>
           <label class="field">
             <span>手机号</span>
-            <input v-model.trim="regForm.phone" placeholder="请输入手机号" />
+            <div class="ipt">
+              <el-icon><Phone /></el-icon>
+              <input v-model.trim="regForm.phone" placeholder="请输入手机号" />
+            </div>
           </label>
           <button type="submit" class="submit" :disabled="loading">
             <span v-if="!loading">注 册</span>
@@ -77,8 +93,12 @@
         <div class="demo">
           <p class="demo-title">演示账号 · 密码 <code>123456</code></p>
           <div class="demo-chips">
-            <span v-for="a in demoAccounts" :key="a.u" @click="fillDemo(a.u)" :class="{ vip: a.vip }">
-              {{ a.u }}<em v-if="a.tag">{{ a.tag }}</em>
+            <span
+              v-for="a in demoAccounts" :key="a.u"
+              @click="fillDemo(a.u)"
+              :class="{ vip: a.vip }"
+            >
+              {{ a.u }}<em>{{ a.tag }}</em>
             </span>
           </div>
         </div>
@@ -92,7 +112,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { login, register } from '../api'
+import { login, register, parseRole } from '../api'
 
 const router = useRouter()
 const tab = ref<'login' | 'register'>('login')
@@ -104,10 +124,14 @@ const loginForm = reactive({ username: 'user1', password: '123456' })
 const regForm = reactive({ username: '', password: '', phone: '' })
 
 const demoAccounts = [
-  { u: 'user1', tag: '顾客', vip: false },
-  { u: 'shop1', tag: '商家', vip: false },
-  { u: 'admin', tag: '平台', vip: true },
+  { u: 'user1',      tag: '顾客', vip: false },
+  { u: 'shop1',      tag: '商家', vip: false },
+  { u: 'shoe_shop',  tag: '商家', vip: false },
+  { u: 'cloth_shop', tag: '商家', vip: false },
+  { u: 'admin',      tag: '平台', vip: true },
 ]
+
+const ADMIN_ROLES = ['shop', 'admin', 'platform']
 
 function fillDemo(u: string) {
   loginForm.username = u
@@ -115,35 +139,49 @@ function fillDemo(u: string) {
   tab.value = 'login'
 }
 
+/** 登录成功后根据角色跳转 */
+function redirectByRole(role: string) {
+  if (ADMIN_ROLES.includes(role)) {
+    router.push('/admin/dashboard')
+  } else {
+    router.push('/')
+  }
+}
+
 async function handleLogin() {
+  if (!loginForm.username || !loginForm.password) { errMsg.value = '请输入用户名和密码'; return }
   loading.value = true; errMsg.value = ''
   try {
     const res: any = await login(loginForm.username, loginForm.password)
-    sessionStorage.setItem('yuexuan_token', res.token)
-    sessionStorage.setItem('yuexuan_user', JSON.stringify({ username: loginForm.username }))
-    const redirect = new URLSearchParams(location.hash.split('?')[1] || '').get('redirect')
-    router.push(redirect || '/')
+    const token = res.token
+    const role = parseRole(token)
+    sessionStorage.setItem('yuexuan_token', token)
+    sessionStorage.setItem('yuexuan_user', JSON.stringify({ username: loginForm.username, role }))
+    redirectByRole(role)
   } catch (e: any) {
-    errMsg.value = '登录失败：' + (e.response?.data?.message || e.message || '账号或密码错误')
+    errMsg.value = '登录失败：' + (e?.message || '账号或密码错误')
   } finally { loading.value = false }
 }
 
 async function handleRegister() {
+  if (!regForm.username || !regForm.password) { errMsg.value = '请填写用户名和密码'; return }
   loading.value = true; errMsg.value = ''
   try {
     const res: any = await register(regForm.username, regForm.password, regForm.phone)
-    sessionStorage.setItem('yuexuan_token', res.token)
-    sessionStorage.setItem('yuexuan_user', JSON.stringify({ username: regForm.username }))
-    router.push('/')
+    const token = res.token
+    const role = parseRole(token)
+    sessionStorage.setItem('yuexuan_token', token)
+    sessionStorage.setItem('yuexuan_user', JSON.stringify({ username: regForm.username, role }))
+    redirectByRole(role)
   } catch (e: any) {
-    errMsg.value = '注册失败：' + (e.response?.data?.message || e.message || '该用户名可能已存在')
+    errMsg.value = '注册失败：' + (e?.message || '该用户名可能已存在')
   } finally { loading.value = false }
 }
 </script>
 
 <style scoped>
 .login-page {
-  min-height: calc(100vh - 64px);
+  min-height: 100vh;
   display: grid;
   grid-template-columns: 1fr 1fr;
   background: var(--bg-page);
@@ -201,7 +239,7 @@ async function handleRegister() {
 .form-side { display: grid; place-items: center; padding: 40px; }
 .form-card {
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
   background: #fff;
   border-radius: var(--r-lg);
   padding: 36px 36px 30px;
@@ -231,26 +269,32 @@ async function handleRegister() {
 
 .form { display: flex; flex-direction: column; gap: 18px; }
 .field { display: flex; flex-direction: column; gap: 8px; }
-.field span { font-size: 13px; color: var(--text-secondary); }
-.field input {
-  height: 44px;
-  padding: 0 16px;
+.field > span { font-size: 13px; color: var(--text-secondary); }
+.ipt {
+  display: flex; align-items: center; gap: 10px;
+  height: 44px; padding: 0 14px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  font-size: 14px;
   background: var(--bg-soft);
   transition: all 0.2s;
 }
-.field input:focus {
+.ipt .el-icon { color: var(--text-muted); font-size: 17px; flex-shrink: 0; }
+.ipt input {
+  flex: 1; border: none; background: transparent;
+  font-size: 14px; outline: none;
+}
+.ipt:focus-within {
   border-color: var(--primary);
   background: #fff;
   box-shadow: 0 0 0 3px var(--primary-light);
 }
+
 .row {
   display: flex; justify-content: space-between; align-items: center;
   font-size: 13px;
 }
 .remember { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); cursor: pointer; }
+.remember input { accent-color: var(--primary); }
 .forgot { color: var(--primary); cursor: pointer; }
 
 .submit {
@@ -262,8 +306,9 @@ async function handleRegister() {
   border-radius: var(--r-md);
   box-shadow: 0 6px 16px rgba(255,68,0,0.3);
   transition: all 0.2s;
+  border: none;
 }
-.submit:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(255,68,0,0.4); }
+.submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(255,68,0,0.4); }
 .submit:disabled { opacity: 0.6; cursor: wait; transform: none; }
 
 .demo {
