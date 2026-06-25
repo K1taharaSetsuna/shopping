@@ -78,7 +78,7 @@ CREATE TABLE `t_pay_info` (
     `order_id`    BIGINT       NOT NULL,
     `order_no`    VARCHAR(30)  DEFAULT NULL,
     `user_id`     BIGINT       DEFAULT NULL,
-    `amount`      DOUBLE       NOT NULL,
+    `amount`      DOUBLE       DEFAULT NULL,
     `status`      VARCHAR(20)  DEFAULT 'UNPAID',  -- UNPAID / PAID
     `create_time` DATETIME     DEFAULT CURRENT_TIMESTAMP,
     `pay_time`    DATETIME     DEFAULT NULL,
@@ -99,7 +99,7 @@ INSERT INTO `t_product` (`name`, `price`, `image`, `category`, `description`, `s
 ('Air Max 运动跑鞋',    899,  NULL, '运动鞋', '舒适缓震跑步鞋',       200, 4.5, 1500),
 ('纯棉圆领T恤',         129,  NULL, 'T恤',    '100%纯棉',             500, 4.3, 3000),
 ('坚果礼盒',            88,   NULL, '食品',   '每日坚果混合装',       300, 4.6, 600),
-('Maz Maz 番茄薯片',    15.9, 'mazmaz-chips-1.png', '食品',   '伊朗人气零食 · ketchup chips', 200, 4.8, 320),
+('北欧风台灯',          159,  NULL, '家居',   'LED护眼台灯',          150, 4.4, 400),
+('Maz Maz 番茄薯片',    15.9, 'mazmaz番茄-1.png', '食品',   '伊朗人气零食 · ketchup chips', 200, 4.8, 320),
 ('Mini Lina 迷你饼干',  12.9, 'minilina-1.png', '食品',   '伊朗经典零食 · 一口一个',       250, 4.6, 280),
-('Maz Maz 土豆条',      13.9, 'mazmaz-sticks-1.png', '食品',   '伊朗热销零食 · potato sticks',   180, 4.7, 210),
-('北欧风台灯',          159,  NULL, '家居',   'LED护眼台灯',          150, 4.4, 400);
+('Maz Maz 土豆条',      13.9, 'mazmaz土豆条-1.png', '食品',   '伊朗热销零食 · potato sticks',   180, 4.7, 210);
