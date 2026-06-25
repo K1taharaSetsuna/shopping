@@ -1,0 +1,6 @@
+# DIN Python source (model & data excluded - too large for GitHub)
+*.pt
+*.pkl
+*.log
+__pycache__/
+

@@ -8,7 +8,7 @@
 
     <header class="reco-head">
       <h1>🤖 AI 智能识物</h1>
-      <p>上传商品图片，AI 自动识别商品类别 — 基于 YOLOv8 深度学习模型</p>
+      <p>上传商品图片，AI 自动识别并匹配商城同款商品</p>
     </header>
 
     <div class="reco-body">
@@ -42,7 +42,7 @@
             <span
               v-for="m in models" :key="m.value"
               :class="{ on: model === m.value }"
-              @click="model = m.value"
+              @click="onModelChange(m.value)"
             >{{ m.label }}</span>
           </div>
 
@@ -51,17 +51,43 @@
             <span v-else>⏳ 识别中...</span>
           </button>
 
-          <!-- 结果列表 -->
-          <div class="detections" v-if="results.length">
-            <h3>识别结果（共 {{ results.length }} 件）</h3>
-            <div class="det-card" v-for="d in results" :key="d.class_id">
+          <!-- 通用匹配结果（/recognize） -->
+          <div class="detections" v-if="productMatch">
+            <h3>🎯 最佳匹配</h3>
+            <div class="det-card product-card">
+              <div class="det-rank">
+                <span class="det-conf">{{ (productMatch.confidence * 100).toFixed(1) }}%</span>
+                <div class="conf-bar"><i :style="{ width: (productMatch.confidence * 100) + '%' }"></i></div>
+              </div>
+              <div class="det-info">
+                <strong class="det-name">{{ productMatch.product.name }}</strong>
+                <span class="det-price">¥{{ productMatch.product.price }}</span>
+                <span class="det-class-id">{{ productMatch.product.category }} · 特征匹配</span>
+              </div>
+              <div class="det-actions">
+                <button class="btn-search" @click="goProduct(productMatch.product.pid)">🛒 看同款</button>
+              </div>
+            </div>
+            <!-- 次选匹配 -->
+            <div v-if="productMatch.top_scores && productMatch.top_scores.length > 1" class="sub-scores">
+              <span class="sub-label">其他可能：</span>
+              <span v-for="s in productMatch.top_scores.slice(1)" :key="s.pid" class="sub-chip" @click="goProduct(s.pid)">
+                {{ getProductName(s.pid) }} {{ (s.similarity * 100).toFixed(0) }}%
+              </span>
+            </div>
+          </div>
+
+          <!-- 零食检测结果（/detect?model=snacks）— 保持不变 -->
+          <div class="detections" v-if="snackResults.length">
+            <h3>{{ productMatch ? '🍿 同时检测到的零食' : '🍿 零食检测结果（共 ' + snackResults.length + ' 件）' }}</h3>
+            <div class="det-card" v-for="d in snackResults" :key="'snack_' + d.class_id">
               <div class="det-rank">
                 <span class="det-conf">{{ (d.confidence * 100).toFixed(1) }}%</span>
                 <div class="conf-bar"><i :style="{ width: (d.confidence * 100) + '%' }"></i></div>
               </div>
               <div class="det-info">
                 <strong class="det-name">{{ d.class_name }}</strong>
-                <span class="det-class-id">{{ d.source === 'snacks' ? '🍿 零食模型' : '🌐 通用模型' }} · class_id: {{ d.class_id }}</span>
+                <span class="det-class-id">🍿 零食模型 · class_id: {{ d.class_id }}</span>
               </div>
               <div class="det-actions">
                 <button class="btn-search" @click="searchProduct(d.class_name)">🔍 搜同款</button>
@@ -70,10 +96,10 @@
           </div>
 
           <!-- 空结果 -->
-          <div class="no-result" v-if="done && !results.length">
+          <div class="no-result" v-if="done && !productMatch && !snackResults.length">
             <div class="no-ico">🤷</div>
             <p>AI 未能识别出商品</p>
-            <span>请尝试更换更清晰的商品图片</span>
+            <span>请尝试更清晰、正面拍摄的商品图片</span>
           </div>
 
           <!-- 错误 -->
@@ -87,7 +113,7 @@
     <!-- 模型说明 -->
     <footer class="reco-footer">
       <div class="model-badge">
-        <span class="mb-dot"></span> YOLOv8n · 伊朗零食数据集 19 类 · mAP50 = 0.992
+        <span class="mb-dot"></span> MobileNetV3 商品特征匹配 + YOLOv8n 零食检测
       </div>
     </footer>
   </div>
@@ -104,13 +130,35 @@ const preview = ref('')
 const detecting = ref(false)
 const done = ref(false)
 const errMsg = ref('')
-const results = ref<any[]>([])
-const model = ref('coco')
+const model = ref('recognize')
 const models = [
-  { label: '🌐 通用', value: 'coco' },
+  { label: '🌐 通用', value: 'recognize' },
   { label: '🍿 零食', value: 'snacks' },
   { label: '🔀 全部', value: 'both' },
 ]
+
+// 通用匹配结果
+const productMatch = ref<any>(null)
+// 零食检测结果
+const snackResults = ref<any[]>([])
+
+// 商品名映射（pid → name）
+const PRODUCT_NAMES: Record<number, string> = {
+  1: '小米14 Ultra', 2: '华为 MatePad Pro', 3: 'Air Max 运动跑鞋',
+  4: '纯棉圆领T恤', 5: '坚果礼盒', 6: 'Maz Maz 番茄薯片',
+  7: 'Mini Lina 迷你饼干', 8: 'Maz Maz 土豆条', 9: '北欧风台灯',
+}
+
+function getProductName(pid: number): string {
+  return PRODUCT_NAMES[pid] || `商品#${pid}`
+}
+
+function onModelChange(val: string) {
+  model.value = val
+  productMatch.value = null
+  snackResults.value = []
+  done.value = false
+}
 
 function onFile(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
@@ -125,34 +173,50 @@ function readFile(file: File) {
   const reader = new FileReader()
   reader.onload = () => {
     preview.value = reader.result as string
-    errMsg.value = ''; results.value = []; done.value = false
+    errMsg.value = ''; productMatch.value = null; snackResults.value = []; done.value = false
   }
   reader.readAsDataURL(file)
 }
 function reset() {
   preview.value = ''
-  results.value = []
+  productMatch.value = null
+  snackResults.value = []
   errMsg.value = ''
   done.value = false
 }
 
 async function detect() {
   if (!preview.value) return
-  detecting.value = true; errMsg.value = ''; results.value = []; done.value = false
+  detecting.value = true; errMsg.value = ''; productMatch.value = null; snackResults.value = []; done.value = false
 
   try {
-    // dataURL → Blob → FormData
     const blob = await fetch(preview.value).then(r => r.blob())
     const form = new FormData()
     form.append('image', blob, 'product.jpg')
 
-    const res = await axios.post(`/yolo/detect?model=${model.value}`, form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      timeout: 30000,
-    })
+    const mode = model.value
 
-    const data = res.data
-    results.value = (data.detections || []).sort((a: any, b: any) => b.confidence - a.confidence)
+    // 通用 / 全部 → 调用 /recognize
+    if (mode === 'recognize' || mode === 'both') {
+      const res = await axios.post('/yolo/recognize', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 30000,
+      })
+      if (res.data.matched) {
+        productMatch.value = res.data
+      }
+    }
+
+    // 零食 / 全部 → 调用 /detect?model=snacks
+    if (mode === 'snacks' || mode === 'both') {
+      const form2 = new FormData()
+      form2.append('image', blob, 'product.jpg')
+      const res = await axios.post('/yolo/detect?model=snacks', form2, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 30000,
+      })
+      snackResults.value = (res.data.detections || []).sort((a: any, b: any) => b.confidence - a.confidence)
+    }
   } catch (e: any) {
     errMsg.value = '识别失败：' + (e.message || '请确认 YOLO 服务已启动')
   } finally {
@@ -161,9 +225,12 @@ async function detect() {
   }
 }
 
+function goProduct(pid: number) {
+  router.push(`/product/${pid}`)
+}
+
 function searchProduct(name: string) {
-  // 跳转首页搜索该商品名
-  router.push({ path: '/', query: { kw: encodeURIComponent(name) } })
+  router.push({ path: '/', query: { kw: name } })
 }
 </script>
 
@@ -187,10 +254,7 @@ function searchProduct(name: string) {
 
 /* 上传区 */
 .upload-zone { max-width: 560px; margin: 0 auto; }
-.drop-area {
-  display: block;
-  cursor: pointer;
-}
+.drop-area { display: block; cursor: pointer; }
 .drop-inner {
   border: 2px dashed var(--border-strong);
   border-radius: var(--r-lg);
@@ -310,6 +374,7 @@ function searchProduct(name: string) {
   transition: all 0.2s;
 }
 .det-card:hover { box-shadow: var(--shadow-card); }
+.det-card.product-card { border-left: 3px solid var(--primary); }
 
 .det-rank { flex-shrink: 0; width: 72px; }
 .det-conf { font-size: 16px; font-weight: 800; color: var(--primary); }
@@ -318,7 +383,25 @@ function searchProduct(name: string) {
 
 .det-info { flex: 1; min-width: 0; }
 .det-name { font-size: 15px; font-weight: 600; color: var(--text-primary); display: block; }
+.det-price { font-size: 16px; font-weight: 800; color: var(--primary); display: block; margin-top: 2px; }
 .det-class-id { font-size: 11px; color: var(--text-muted); margin-top: 2px; display: block; }
+
+/* 次选匹配 */
+.sub-scores {
+  margin-top: 8px; padding: 8px 12px;
+  background: var(--bg-soft); border-radius: var(--r-sm);
+  font-size: 12px; color: var(--text-muted);
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+}
+.sub-label { flex-shrink: 0; }
+.sub-chip {
+  padding: 2px 10px;
+  background: #fff; border: 1px solid var(--border-light);
+  border-radius: var(--r-round);
+  cursor: pointer; color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.sub-chip:hover { border-color: var(--primary); color: var(--primary); }
 
 .btn-search {
   padding: 7px 16px;
