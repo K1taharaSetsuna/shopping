@@ -121,7 +121,25 @@ export const cancelOrder = (id: number): Promise<void> =>
 export const receiveOrder = (id: number): Promise<void> =>
   http.put(`/a/orders/${id}/receive`)
 
-// ==================== 鉴权 ====================
+// ==================== DIN 推荐 ====================
+export interface RecommendItem {
+  item_id: number
+  category: number
+  score: number
+}
+
+export interface RecommendResult {
+  user_id: number
+  username?: string
+  recommendations: RecommendItem[]
+}
+
+export const getRecommendations = (username?: string): Promise<RecommendResult> =>
+  fetch('/recommend', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: username || 'admin' }),
+  }).then(res => res.json())
 export const login = (username: string, password: string): Promise<{ token: string }> =>
   http.post('/a/login', { username, password })
 
