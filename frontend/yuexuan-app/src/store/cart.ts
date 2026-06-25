@@ -5,6 +5,7 @@ export interface CartItem {
   name: string
   price: number
   category: string
+  image: string
   qty: number
   selected: boolean
 }
@@ -21,10 +22,10 @@ function save(items: CartItem[]) {
 
 export const cart = reactive<{ items: CartItem[] }>({ items: load() })
 
-export function addToCart(pid: number, name: string, price: number, category: string) {
+export function addToCart(pid: number, name: string, price: number, category: string, image: string = '', qty: number = 1) {
   const exist = cart.items.find(i => i.pid === pid)
-  if (exist) { exist.qty++ } else {
-    cart.items.push({ pid, name: name.split('—')[0], price, category, qty: 1, selected: true })
+  if (exist) { exist.qty += qty } else {
+    cart.items.push({ pid, name: name.split('—')[0], price, category, image, qty, selected: true })
   }
   save(cart.items)
 }

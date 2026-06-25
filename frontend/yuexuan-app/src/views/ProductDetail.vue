@@ -184,13 +184,13 @@ function dec() { if (qty.value > 1) qty.value-- }
 
 function addCart() {
   if (!p.value || p.value.stock <= 0) return
-  addToCart(p.value.pid, p.value.name, p.value.price, p.value.category)
+  addToCart(p.value.pid, p.value.name, p.value.price, p.value.category, p.value.image || '', qty.value)
   msg.value = '✅ 已加入购物车'
   setTimeout(() => msg.value = '', 1500)
 }
 function buyNow() {
   if (!p.value || p.value.stock <= 0) return
-  addToCart(p.value.pid, p.value.name, p.value.price, p.value.category)
+  addToCart(p.value.pid, p.value.name, p.value.price, p.value.category, p.value.image || '', qty.value)
   router.push('/cart')
 }
 </script>

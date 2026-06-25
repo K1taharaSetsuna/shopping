@@ -34,7 +34,7 @@
           </label>
           <div class="col-info" @click="$router.push(`/product/${item.pid}`)">
             <div class="thumb">
-              <ProductImage :image="''" :category="item.category" :name="item.name" radius="4px" />
+              <ProductImage :image="item.image" :category="item.category" :name="item.name" radius="4px" />
             </div>
             <div class="meta">
               <h4 class="ellipsis-2">{{ item.name }}</h4>

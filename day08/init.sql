@@ -94,12 +94,12 @@ INSERT INTO `t_user` (`username`, `password`, `role`) VALUES
 ('test',       '123456', 'user');
 
 INSERT INTO `t_product` (`name`, `price`, `image`, `category`, `description`, `stock`, `rating`, `review_count`) VALUES
-('小米14 Ultra',        6999, NULL, '数码',   '旗舰影像手机',         100, 4.8, 1200),
-('华为 MatePad Pro',    4999, NULL, '数码',   '平板电脑',             80,  4.7, 800),
-('Air Max 运动跑鞋',    899,  NULL, '运动鞋', '舒适缓震跑步鞋',       200, 4.5, 1500),
-('纯棉圆领T恤',         129,  NULL, 'T恤',    '100%纯棉',             500, 4.3, 3000),
-('坚果礼盒',            88,   NULL, '食品',   '每日坚果混合装',       300, 4.6, 600),
-('北欧风台灯',          159,  NULL, '家居',   'LED护眼台灯',          150, 4.4, 400),
+('小米14 Ultra',        6999, 'xiaomi-1.png', '数码',   '旗舰影像手机',         100, 4.8, 1200),
+('华为 MatePad Pro',    4999, 'huawei-1.png', '数码',   '平板电脑',             80,  4.7, 800),
+('Air Max 运动跑鞋',    899,  'airmax-1.png', '运动鞋', '舒适缓震跑步鞋',       200, 4.5, 1500),
+('纯棉圆领T恤',         129,  'tshirt-1.png', 'T恤',    '100%纯棉',             500, 4.3, 3000),
+('坚果礼盒',            88,   'nuts-1.png',   '食品',   '每日坚果混合装',       300, 4.6, 600),
+('北欧风台灯',          159,  'lamp-1.png',   '家居',   'LED护眼台灯',          150, 4.4, 400),
 ('Maz Maz 番茄薯片',    15.9, 'mazmaz番茄-1.png', '食品',   '伊朗人气零食 · ketchup chips', 200, 4.8, 320),
 ('Mini Lina 迷你饼干',  12.9, 'minilina-1.png', '食品',   '伊朗经典零食 · 一口一个',       250, 4.6, 280),
 ('Maz Maz 土豆条',      13.9, 'mazmaz土豆条-1.png', '食品',   '伊朗热销零食 · potato sticks',   180, 4.7, 210);
