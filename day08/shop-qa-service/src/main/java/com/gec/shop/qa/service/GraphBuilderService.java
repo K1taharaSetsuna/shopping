@@ -33,7 +33,14 @@ public class GraphBuilderService {
     }
 
     public void buildGraph() {
-        List<ProductRow> products = productMapper.findAll();
+        List<ProductRow> products;
+        try {
+            products = productMapper.findAll();
+        } catch (Exception e) {
+            System.out.println("[GraphBuilder] MySQL 查询失败: " + e.getMessage() + "，使用种子数据");
+            buildWithSeedData();
+            return;
+        }
         if (products.isEmpty()) {
             System.out.println("[GraphBuilder] MySQL 无商品数据，使用种子数据");
             buildWithSeedData();

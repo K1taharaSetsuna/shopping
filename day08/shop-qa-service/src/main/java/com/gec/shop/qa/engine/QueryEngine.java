@@ -81,7 +81,6 @@ public class QueryEngine {
                 result.put("method", "fuzzy_product");
             } else {
                 result.put("answer", "抱歉，我还没学会这个问题。您可以问价格、库存、退换货、物流等相关问题~");
-                result.put("intent", "unknown");
                 result.put("method", "fallback");
             }
         }
@@ -95,6 +94,13 @@ public class QueryEngine {
         if (templates.isEmpty()) return null;
 
         if (!entities.isEmpty()) {
+            // Category 实体 → 查类目下商品
+            if ("Category".equals(entities.get(0).type)) {
+                String catName = entities.get(0).name;
+                String cypher = "MATCH (c:Category {name: '"+catName+"'})<-[:BELONGS_TO]-(p:Product) RETURN COLLECT(p.name) AS result, COLLECT(p.price) AS prices";
+                List<Map<String, Object>> data = executeCypher(cypher);
+                if (data != null && !data.isEmpty()) return data;
+            }
             for (CypherTemplates.Template tmpl : templates) {
                 Map<String, Object> params = new LinkedHashMap<>();
                 params.put("entity", entities.get(0).name);
@@ -141,11 +147,24 @@ public class QueryEngine {
 
     private Map<String, Object> fuzzySearchProduct(String keyword) {
         try (Session session = driver.session()) {
+            // Try exact CONTAINS first
             var results = session.run(
                 "MATCH (p:Product) WHERE p.name CONTAINS $kw RETURN p LIMIT 3",
                 Map.of("kw", keyword)
             ).list(r -> r.get("p").asMap());
-            return results.isEmpty() ? null : results.get(0);
+            if (!results.isEmpty()) return results.get(0);
+            // Try each 2-char+ segment as fallback
+            for (int i = 0; i < keyword.length(); i++) {
+                for (int j = i + 2; j <= Math.min(i + 5, keyword.length()); j++) {
+                    String seg = keyword.substring(i, j);
+                    results = session.run(
+                        "MATCH (p:Product) WHERE p.name CONTAINS $kw RETURN p LIMIT 3",
+                        Map.of("kw", seg)
+                    ).list(r -> r.get("p").asMap());
+                    if (!results.isEmpty()) return results.get(0);
+                }
+            }
+            return null;
         } catch (Exception e) {
             return null;
         }
@@ -166,20 +185,20 @@ public class QueryEngine {
             String key = e.getKey().replace("_", " ");
             Object val = e.getValue();
             if (val instanceof List<?> list && !list.isEmpty()) {
-                sb.append(key).append(": ").append(String.join(", ", list.stream().map(Object::toString).toList()));
+                sb.append(key).append(": ").append(String.join(", ", list.stream().map(Object::toString).toList())).append("; ");
             } else if (val != null) {
-                sb.append(val);
+                sb.append(val).append(" ");
             }
         }
         return sb.length() > 0 ? sb.toString() : "未找到结果";
     }
 
     private double[] extractPriceRange(String query) {
-        java.util.regex.Matcher m1 = Pattern.compile("(\d+)\s*元?\s*以[内下]").matcher(query);
+        java.util.regex.Matcher m1 = Pattern.compile("(\\d+)\\s*元?\\s*以[内下]").matcher(query);
         if (m1.find()) return new double[]{0, Double.parseDouble(m1.group(1))};
-        java.util.regex.Matcher m2 = Pattern.compile("[大于高超过](\d+)").matcher(query);
+        java.util.regex.Matcher m2 = Pattern.compile("[大于高超过](\\d+)").matcher(query);
         if (m2.find()) return new double[]{Double.parseDouble(m2.group(1)), Double.MAX_VALUE};
-        java.util.regex.Matcher m3 = Pattern.compile("(\d+)\s*[-~至到]\s*(\d+)\s*元?").matcher(query);
+        java.util.regex.Matcher m3 = Pattern.compile("(\\d+)\\s*[-~至到]\\s*(\\d+)\\s*元?").matcher(query);
         if (m3.find()) return new double[]{Double.parseDouble(m3.group(1)), Double.parseDouble(m3.group(2))};
         return null;
     }
