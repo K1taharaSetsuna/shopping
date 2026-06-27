@@ -24,13 +24,17 @@
       <!-- 中间轮播 -->
       <div class="banner-wrap">
         <div class="banner-track" :style="{ transform: `translateX(-${cur * 100}%)` }">
-          <div v-for="(b, i) in banners" :key="i" class="banner-slide" :style="{ background: b.bg }">
+          <div
+            v-for="(b, i) in banners" :key="i"
+            class="banner-slide"
+            :style="{ backgroundImage: `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.45)), url(${b.image})` }"
+            @click="$router.push(b.link)"
+          >
             <div class="banner-text">
+              <span class="banner-tag">{{ b.tag }}</span>
               <h2>{{ b.title }}</h2>
               <p>{{ b.sub }}</p>
-              <button @click="b.action">{{ b.btn }}</button>
             </div>
-            <div class="banner-ico" v-html="b.ico"></div>
           </div>
         </div>
         <div class="banner-dots">
@@ -183,10 +187,22 @@ const cats = [
 const activeLabel = computed(() => cats.find(c => c.value === active.value)?.label || active.value)
 
 const banners = [
-  { title:'悦选年中盛典', sub:'全场好物 低至5折 · 限时抢购', btn:'立即抢购 ›', ico:'<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>', bg:'linear-gradient(135deg,#FF4400,#FF8A4C)', action: () => router.push('/?kw=跑鞋') },
-  { title:'数码新潮区', sub:'耳机 · 手表 · 音箱 一站到位', btn:'去看看 ›', ico:'<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>', bg:'linear-gradient(135deg,#1A2A6C,#B21F1F,#FDBB2D)', action: () => router.push('/?kw=耳机') },
-  { title:'吃货专享', sub:'坚果 · 绿茶 健康又解馋', ico:'<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/><circle cx="12" cy="4" r="1.5" fill="#fff" opacity="0.6"/></svg>', btn:'馋了就买 ›', bg:'linear-gradient(135deg,#11998e,#38ef7d)', action: () => router.push('/?kw=坚果') },
-  { title:'潮流穿搭', sub:'运动鞋 + T恤 一周不重样', ico:'<svg width="60" height="60" viewBox="0 0 960 960" fill="none" stroke="#fff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"><path d="M 821,730 Q 786,730 760,730 Q 708,730 660,726 Q 615,719 572,709 Q 528,704 483,707 Q 439,716 396,725 Q 350,728 303,725 Q 259,716 218,704 Q 179,689 143,672 Q 109,654 79,633 Q 57,605 52,570 Q 54,552 65,537 Q 92,511 129,496 Q 172,487 217,480 Q 260,470 298,455 Q 330,435 356,413 Q 380,391 403,370 Q 426,347 449,324 Q 472,301 497,277 Q 524,256 554,242 Q 585,246 611,268 Q 629,302 643,339 Q 666,367 699,377 Q 732,368 759,343 Q 783,314 811,298 Q 838,296 860,305 Q 877,331 891,367 Q 904,424 913,472 Q 916,531 914,574 Q 908,618 900,659 Q 883,694 861,716 Q 836,727 821,730 Z"/></svg>', btn:'选我的 ›', bg:'linear-gradient(135deg,#6a11cb,#2575fc)', action: () => router.push('/?kw=跑鞋') },
+  {
+    tag: '数码潮品', title: '新潮数码馆', sub: '手机 · 平板 · 耳机 一站配齐',
+    image: '/images/xiaomi-1.png', link: '/?cat=数码',
+  },
+  {
+    tag: '运动装备', title: '运动风尚季', sub: '跑鞋 · T恤 · 轻装上阵 活力全开',
+    image: '/images/airmax-1.png', link: '/?cat=运动鞋',
+  },
+  {
+    tag: '零食天地', title: '环球零食铺', sub: '伊朗薯片 · 坚果礼盒 · 一口上瘾',
+    image: '/images/mazmaz番茄-1.png', link: '/?cat=食品',
+  },
+  {
+    tag: '品质家居', title: '生活美学坊', sub: '北欧台灯 · 简约收纳 · 点亮日常',
+    image: '/images/lamp-1.png', link: '/?cat=家居',
+  },
 ]
 
 const user = computed(() => {
@@ -296,25 +312,44 @@ onUnmounted(() => { clearInterval(timer) })
 .banner-slide {
   flex: 0 0 100%;
   height: 100%;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 60px;
+  display: flex; align-items: flex-end;
+  padding: 0 48px 48px;
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
   color: #fff;
+  position: relative;
 }
-.banner-text h2 { font-size: 38px; font-weight: 800; margin-bottom: 12px; text-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-.banner-text p { font-size: 16px; opacity: 0.95; margin-bottom: 22px; }
-.banner-text button {
-  padding: 11px 28px;
-  background: rgba(255,255,255,0.95);
-  color: var(--primary);
-  font-size: 15px; font-weight: 700;
-  border-radius: var(--r-round);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+.banner-slide::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%);
+  pointer-events: none;
 }
-.banner-text button:hover { transform: translateY(-2px); }
-.banner-ico { opacity: 0.85; display: flex; align-items: center; }
+.banner-text { position: relative; z-index: 1; }
+.banner-tag {
+  display: inline-block;
+  font-size: 11px; font-weight: 700;
+  padding: 3px 10px;
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(6px);
+  border-radius: 4px;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.banner-text h2 {
+  font-size: 34px; font-weight: 800; margin-bottom: 8px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.banner-text p {
+  font-size: 15px; opacity: 0.9;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
 .banner-dots {
   position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
-  display: flex; gap: 8px;
+  display: flex; gap: 8px; z-index: 2;
 }
 .banner-dots span {
   width: 8px; height: 8px; border-radius: 50%;
